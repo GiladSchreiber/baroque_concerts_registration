@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         width: 300, margin: 2, color: { dark: "#0a0a14", light: "#f0e6d3" },
       });
       await resend.emails.send({
-        from: "Baroque Concerts <noreply@yourdomain.com>",
+        from: "Baroque Concerts <onboarding@resend.dev>",
         to: email,
         subject: `אישור הרשמה – ${concert.title_he}`,
         html: `
