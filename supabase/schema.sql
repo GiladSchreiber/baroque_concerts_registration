@@ -79,23 +79,7 @@ create policy "Public can read registrations"
 -- on conflict do nothing;
 
 -- ─────────────────────────────────────────
--- SAMPLE CONCERT (edit to taste)
+-- SAMPLE CONCERT
 -- ─────────────────────────────────────────
-insert into public.concerts (
-  title_en, title_he,
-  date,
-  location_en, location_he,
-  description_en, description_he,
-  capacity, price_nis,
-  is_active
-) values (
-  'Vivaldi — The Four Seasons',
-  'וויוולדי — ארבע העונות',
-  (now() + interval '30 days')::timestamptz,
-  'Tel Aviv Museum of Art, Recanati Auditorium',
-  'מוזיאון תל אביב לאמנות, אודיטוריום רקנאטי',
-  'An intimate chamber performance of Vivaldi''s iconic Four Seasons, performed on period instruments.',
-  'הופעת תזמורת צלילים אינטימית של ארבע העונות המפורסמות של וויוולדי, בנגינה על כלים מוקדמים.',
-  80, 120,
-  true
-);
+-- Create your first concert from the admin panel at /admin
+-- No need to insert sample data here.

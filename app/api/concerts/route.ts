@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
-import { isSupabaseConfigured } from "@/lib/is-configured";
-import { localGetConcerts } from "@/lib/local-store";
+import { createServerClient } from "@/lib/supabase-server";
 
 export async function GET() {
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json(localGetConcerts(true));
-  }
-
-  const { createServerClient } = await import("@/lib/supabase-server");
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("concerts")

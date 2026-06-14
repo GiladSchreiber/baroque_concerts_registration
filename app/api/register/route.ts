@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isSupabaseConfigured } from "@/lib/is-configured";
-import {
-  localGetConcert,
-  localGetRegistrations,
-  localInsertRegistration,
-} from "@/lib/local-store";
+import { createServerClient } from "@/lib/supabase-server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -27,28 +22,10 @@ export async function POST(req: NextRequest) {
 
   const { concert_id, full_name, phone, email, spots } = parsed.data;
 
-  // ── Local mode ─────────────────────────────────────────────────────────────
-  if (!isSupabaseConfigured()) {
-    const concert = localGetConcert(concert_id);
-    if (!concert) return NextResponse.json({ error: "Concert not found" }, { status: 404 });
-
-    const existing = localGetRegistrations(concert_id).filter((r) => !r.on_waitlist);
-    const spotsTaken = existing.reduce((s, r) => s + r.spots, 0);
-    const onWaitlist = spotsTaken + spots > concert.capacity;
-
-    const reg = localInsertRegistration({ concert_id, full_name, phone, email, spots, on_waitlist: onWaitlist });
-    return NextResponse.json({ id: reg.id, on_waitlist: onWaitlist, spots_left: Math.max(0, concert.capacity - spotsTaken - spots) });
-  }
-
-  // ── Supabase mode ──────────────────────────────────────────────────────────
-  const { createServerClient } = await import("@/lib/supabase-server");
-  const { Resend } = await import("resend");
-  const QRCode = await import("qrcode");
-
   const supabase = createServerClient();
 
   const { data: concert, error: concertError } = await supabase
-    .from("concerts").select("capacity, title_en, title_he, date, location_en").eq("id", concert_id).single();
+    .from("concerts").select("capacity, title_he, date").eq("id", concert_id).single();
   if (concertError || !concert)
     return NextResponse.json({ error: "Concert not found" }, { status: 404 });
 
@@ -62,20 +39,54 @@ export async function POST(req: NextRequest) {
   if (insertError || !reg)
     return NextResponse.json({ error: "Failed to register" }, { status: 500 });
 
-  // Send email
+  // Send confirmation email if Resend is configured
   const resendKey = process.env.RESEND_API_KEY;
-  if (resendKey && !resendKey.includes("your_resend")) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const qrDataUrl = await QRCode.toDataURL(reg.id, { width: 300, margin: 2, color: { dark: "#0a0a14", light: "#f0e6d3" } });
-    const resend = new Resend(resendKey);
-    const concertDate = new Date(concert.date).toLocaleDateString("he-IL", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
-    await resend.emails.send({
-      from: "Baroque Concerts <noreply@yourdomain.com>",
-      to: email,
-      subject: `אישור הרשמה – ${concert.title_he}`,
-      html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a14;color:#f0e6d3;padding:32px;border-radius:12px;"><h1 style="color:#c9a227;text-align:center;">ההרשמה אושרה! 🎶</h1><p>שלום ${full_name},</p><p>הרשמתך לקונצרט <strong>${concert.title_he}</strong> אושרה.</p><ul><li><strong>תאריך:</strong> ${concertDate}</li><li><strong>מקומות:</strong> ${spots}</li></ul>${onWaitlist ? `<p style="color:#e4c060;">⚠️ הועברת לרשימת המתנה.</p>` : `<div style="text-align:center;margin:24px 0;"><img src="${qrDataUrl}" style="width:200px;height:200px;" /></div><p>דף האישור: <a href="${appUrl}/confirmation/${reg.id}" style="color:#c9a227;">${appUrl}/confirmation/${reg.id}</a></p>`}</div>`,
-    });
+  if (resendKey && !resendKey.startsWith("re_your")) {
+    try {
+      const { Resend } = await import("resend");
+      const QRCode = await import("qrcode");
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      const resend = new Resend(resendKey);
+      const concertDate = new Date(concert.date).toLocaleDateString("he-IL", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
+      });
+      const qrDataUrl = await QRCode.toDataURL(reg.id, {
+        width: 300, margin: 2, color: { dark: "#0a0a14", light: "#f0e6d3" },
+      });
+      await resend.emails.send({
+        from: "Baroque Concerts <noreply@yourdomain.com>",
+        to: email,
+        subject: `אישור הרשמה – ${concert.title_he}`,
+        html: `
+          <div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a0a14;color:#f0e6d3;padding:32px;border-radius:12px;">
+            <h1 style="color:#c9a227;text-align:center;">ההרשמה התקבלה 🎶</h1>
+            <p>שלום ${full_name},</p>
+            <p>הרשמתך לקונצרט <strong>${concert.title_he}</strong> אושרה.</p>
+            <ul>
+              <li><strong>תאריך:</strong> ${concertDate}</li>
+              <li><strong>מקומות:</strong> ${spots}</li>
+            </ul>
+            ${onWaitlist
+              ? `<p style="color:#e4c060;">⚠️ הועברת לרשימת המתנה. נעדכן אותך אם יתפנה מקום.</p>`
+              : `<div style="text-align:center;margin:24px 0;">
+                   <img src="${qrDataUrl}" style="width:200px;height:200px;" />
+                   <p style="margin-top:12px;font-size:13px;color:#a09070;">הצג קוד זה בכניסה לאירוע</p>
+                 </div>
+                 <p style="text-align:center;">
+                   <a href="${appUrl}/confirmation/${reg.id}" style="color:#c9a227;">${appUrl}/confirmation/${reg.id}</a>
+                 </p>`
+            }
+          </div>`,
+      });
+    } catch (emailErr) {
+      console.error("[register] Email send failed:", emailErr);
+      // Don't fail the registration if email fails
+    }
   }
 
-  return NextResponse.json({ id: reg.id, on_waitlist: onWaitlist, spots_left: Math.max(0, concert.capacity - spotsTaken - spots) });
+  return NextResponse.json({
+    id: reg.id,
+    on_waitlist: onWaitlist,
+    spots_left: Math.max(0, concert.capacity - spotsTaken - spots),
+  });
 }

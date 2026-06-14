@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isSupabaseConfigured } from "@/lib/is-configured";
-import { localGetRegistration, localCheckIn, localUncheckIn } from "@/lib/local-store";
+import { createServerClient } from "@/lib/supabase-server";
 
 export async function POST(
   req: NextRequest,
@@ -11,16 +10,6 @@ export async function POST(
   if (req.headers.get("x-admin-password") !== process.env.ADMIN_PASSWORD)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!isSupabaseConfigured()) {
-    const reg = localGetRegistration(id);
-    if (!reg) return NextResponse.json({ error: "Registration not found" }, { status: 404 });
-    if (reg.on_waitlist) return NextResponse.json({ error: "Registration is on waitlist" }, { status: 400 });
-    if (reg.checked_in) return NextResponse.json({ error: "already_checked_in" }, { status: 409 });
-    localCheckIn(id);
-    return NextResponse.json({ success: true });
-  }
-
-  const { createServerClient } = await import("@/lib/supabase-server");
   const supabase = createServerClient();
 
   const { data: reg, error: fetchError } = await supabase
@@ -45,12 +34,6 @@ export async function DELETE(
   if (req.headers.get("x-admin-password") !== process.env.ADMIN_PASSWORD)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!isSupabaseConfigured()) {
-    localUncheckIn(id);
-    return NextResponse.json({ success: true });
-  }
-
-  const { createServerClient } = await import("@/lib/supabase-server");
   const supabase = createServerClient();
   await supabase
     .from("registrations")

@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isSupabaseConfigured } from "@/lib/is-configured";
-import {
-  localGetConcerts,
-  localGetRegistrations,
-  localInsertConcert,
-} from "@/lib/local-store";
+import { createServerClient } from "@/lib/supabase-server";
 import type { Concert } from "@/lib/database.types";
 
 function checkAuth(req: NextRequest) {
@@ -15,23 +10,6 @@ export async function GET(req: NextRequest) {
   if (!checkAuth(req))
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!isSupabaseConfigured()) {
-    const concerts = localGetConcerts();
-    const allRegs = localGetRegistrations();
-    const statsMap = new Map<string, { totalSpots: number; registrations: number; checkedIn: number; waitlist: number }>();
-    for (const r of allRegs) {
-      if (!statsMap.has(r.concert_id))
-        statsMap.set(r.concert_id, { totalSpots: 0, registrations: 0, checkedIn: 0, waitlist: 0 });
-      const s = statsMap.get(r.concert_id)!;
-      if (r.on_waitlist) { s.waitlist += 1; }
-      else { s.totalSpots += r.spots; s.registrations += 1; if (r.checked_in) s.checkedIn += 1; }
-    }
-    return NextResponse.json(
-      concerts.map((c) => ({ ...c, stats: statsMap.get(c.id) ?? { totalSpots: 0, registrations: 0, checkedIn: 0, waitlist: 0 } }))
-    );
-  }
-
-  const { createServerClient } = await import("@/lib/supabase-server");
   const supabase = createServerClient();
   const [concertsRes, regsRes] = await Promise.all([
     supabase.from("concerts").select("*").order("date", { ascending: false }),
@@ -47,8 +25,12 @@ export async function GET(req: NextRequest) {
     if (r.on_waitlist) { s.waitlist += 1; }
     else { s.totalSpots += r.spots; s.registrations += 1; if (r.checked_in) s.checkedIn += 1; }
   }
+
   return NextResponse.json(
-    (concertsRes.data ?? []).map((c) => ({ ...c, stats: statsMap.get(c.id) ?? { totalSpots: 0, registrations: 0, checkedIn: 0, waitlist: 0 } }))
+    (concertsRes.data ?? []).map((c) => ({
+      ...c,
+      stats: statsMap.get(c.id) ?? { totalSpots: 0, registrations: 0, checkedIn: 0, waitlist: 0 },
+    }))
   );
 }
 
@@ -57,13 +39,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json() as Omit<Concert, "id" | "created_at">;
-
-  if (!isSupabaseConfigured()) {
-    const concert = localInsertConcert(body);
-    return NextResponse.json(concert, { status: 201 });
-  }
-
-  const { createServerClient } = await import("@/lib/supabase-server");
   const supabase = createServerClient();
   const { data, error } = await supabase.from("concerts").insert(body).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
