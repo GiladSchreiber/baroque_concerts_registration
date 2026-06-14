@@ -29,7 +29,6 @@ export const eventSchema = z.object({
   capacity: z.number().int().min(1, "מינימום 1"),
   price_nis: z.number().int().min(0, "מינימום 0"),
   poster_url: z.string().optional(),
-  is_active: z.boolean(),
 });
 
 export type EventFormValues = z.infer<typeof eventSchema>;
@@ -51,7 +50,6 @@ export function concertToFormValues(c: Concert): EventFormValues {
     capacity: c.capacity,
     price_nis: c.price_nis,
     poster_url: c.poster_url ?? "",
-    is_active: c.is_active,
   };
 }
 
@@ -73,7 +71,7 @@ export function formValuesToConcert(v: EventFormValues): Omit<Concert, "id" | "c
     capacity: v.capacity,
     price_nis: v.price_nis,
     poster_url: v.poster_url || null,
-    is_active: v.is_active,
+    is_active: true,
   };
 }
 
@@ -100,7 +98,6 @@ const DEFAULT_VALUES: EventFormValues = {
   capacity: 80,
   price_nis: 120,
   poster_url: "",
-  is_active: true,
 };
 
 export function EventForm({
@@ -133,13 +130,12 @@ export function EventForm({
   });
 
   const posterUrl = watch("poster_url");
-  const isActive = watch("is_active");
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" dir="rtl">
 
-      {/* ── Section: זהות האירוע ─────────────────────────────────── */}
-      <Section title="זהות האירוע">
+      {/* ── Section: פרטי האירוע ─────────────────────────────────── */}
+      <Section title="פרטי האירוע">
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="שם הלהקה / האנסמבל (עברית)" error={errors.band_name?.message} required>
             <input
@@ -177,10 +173,7 @@ export function EventForm({
             />
           </Field>
         </div>
-      </Section>
 
-      {/* ── Section: תאריך ────────────────────────────────────────── */}
-      <Section title="תאריך ושעה">
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="תאריך" error={errors.date_part?.message} required>
             <input
@@ -195,6 +188,27 @@ export function EventForm({
               type="time"
               {...register("time_part")}
               className={inputCls(!!errors.time_part)}
+              dir="ltr"
+            />
+          </Field>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="תיאור (עברית)">
+            <textarea
+              {...register("description_he")}
+              rows={3}
+              className={`${inputCls(false)} resize-none`}
+              placeholder="תיאור קצר של הקונצרט..."
+              dir="rtl"
+            />
+          </Field>
+          <Field label="Description (English)">
+            <textarea
+              {...register("description_en")}
+              rows={3}
+              className={`${inputCls(false)} resize-none`}
+              placeholder="Short description in English..."
               dir="ltr"
             />
           </Field>
@@ -251,34 +265,10 @@ export function EventForm({
         </div>
       </Section>
 
-      {/* ── Section: תיאור ────────────────────────────────────────── */}
-      <Section title="תיאור (אופציונלי)">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="תיאור (עברית)">
-            <textarea
-              {...register("description_he")}
-              rows={3}
-              className={`${inputCls(false)} resize-none`}
-              placeholder="תיאור קצר של הקונצרט..."
-              dir="rtl"
-            />
-          </Field>
-          <Field label="Description (English)">
-            <textarea
-              {...register("description_en")}
-              rows={3}
-              className={`${inputCls(false)} resize-none`}
-              placeholder="Short description in English..."
-              dir="ltr"
-            />
-          </Field>
-        </div>
-      </Section>
-
       {/* ── Section: כרטיסים ────────────────────────────────────────── */}
       <Section title="כרטיסים">
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="קיבולת האולם" error={errors.capacity?.message} required>
+          <Field label="כמות מקסימאלית" error={errors.capacity?.message} required>
             <input
               type="number"
               {...register("capacity", { valueAsNumber: true })}
@@ -311,27 +301,6 @@ export function EventForm({
             />
           )}
         />
-      </Section>
-
-      {/* ── Section: נראות ─────────────────────────────────────────── */}
-      <Section title="נראות">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div
-            onClick={() => setValue("is_active", !isActive)}
-            className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${
-              isActive ? "bg-gold" : "bg-white/20"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
-                isActive ? "end-0.5" : "start-0.5"
-              }`}
-            />
-          </div>
-          <span className="text-cream text-sm">
-            {isActive ? "פורסם — גלוי לציבור" : "טיוטה — מוסתר מהציבור"}
-          </span>
-        </label>
       </Section>
 
       {/* ── Submit ──────────────────────────────────────────────────── */}

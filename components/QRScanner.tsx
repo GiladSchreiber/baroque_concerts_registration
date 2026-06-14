@@ -11,6 +11,7 @@ type Props = {
 export function QRScanner({ onScan, active }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const isRunningRef = useRef(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export function QRScanner({ onScan, active }: Props) {
 
     const scanner = new Html5Qrcode(scannerId);
     scannerRef.current = scanner;
+    isRunningRef.current = false;
 
     scanner
       .start(
@@ -31,22 +33,30 @@ export function QRScanner({ onScan, active }: Props) {
         },
         undefined
       )
+      .then(() => {
+        isRunningRef.current = true;
+      })
       .catch((err) => {
         setError(String(err));
       });
 
     return () => {
-      scanner
-        .stop()
-        .then(() => scanner.clear())
-        .catch(() => {});
+      if (isRunningRef.current) {
+        isRunningRef.current = false;
+        scanner.stop().then(() => scanner.clear()).catch(() => {});
+      } else {
+        // Scanner hadn't started yet — wait briefly then clean up
+        setTimeout(() => {
+          scanner.stop().then(() => scanner.clear()).catch(() => {});
+        }, 500);
+      }
     };
   }, [active, onScan]);
 
   if (error) {
     return (
       <div className="rounded-xl bg-red-900/20 border border-red-500/30 p-4 text-red-300 text-sm">
-        Camera error: {error}
+        שגיאת מצלמה: {error}
       </div>
     );
   }

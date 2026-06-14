@@ -3,12 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Navbar } from "@/components/Navbar";
-import { useLanguage } from "@/components/LanguageProvider";
+import { AdminNavbar } from "@/components/AdminNavbar";
 import type { ConcertWithStats } from "@/lib/database.types";
 
 export default function AdminConcertListPage() {
-  const { lang } = useLanguage();
   const router = useRouter();
   const adminPassword = useRef("");
   const [concerts, setConcerts] = useState<ConcertWithStats[]>([]);
@@ -38,7 +36,7 @@ export default function AdminConcertListPage() {
   }, [router, load]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this event? This cannot be undone.")) return;
+    if (!confirm("למחוק את האירוע? פעולה זו אינה הפיכה.")) return;
     setDeletingId(id);
     await fetch(`/api/admin/concerts/${id}`, {
       method: "DELETE",
@@ -57,29 +55,19 @@ export default function AdminConcertListPage() {
       },
       body: JSON.stringify({ is_active: !c.is_active }),
     });
-    setConcerts((prev) =>
-      prev.map((x) => (x.id === c.id ? { ...x, is_active: !c.is_active } : x))
-    );
   };
 
-  const upcoming = concerts.filter(
-    (c) => new Date(c.date) >= new Date()
-  );
+  const upcoming = concerts.filter((c) => new Date(c.date) >= new Date());
   const past = concerts.filter((c) => new Date(c.date) < new Date());
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <AdminNavbar />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-10" dir="rtl">
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
-          <div>
-            <h1 className="text-2xl font-bold text-cream">אירועים</h1>
-            <p className="text-cream-muted text-sm mt-0.5">
-              {concerts.length} סה״כ · {upcoming.length} קרובים
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-cream">אירועים</h1>
           <Link
             href="/admin/events/new"
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-navy font-bold text-sm hover:bg-gold-light transition-colors shadow-[0_4px_16px_#c9a22730]"
@@ -96,21 +84,17 @@ export default function AdminConcertListPage() {
           <div className="space-y-10">
             {upcoming.length > 0 && (
               <EventGroup
-                title="Upcoming"
+                title="upcoming"
                 concerts={upcoming}
-                lang={lang}
                 onDelete={handleDelete}
-                onToggleActive={handleToggleActive}
                 deletingId={deletingId}
               />
             )}
             {past.length > 0 && (
               <EventGroup
-                title="Past Events"
+                title="past"
                 concerts={past}
-                lang={lang}
                 onDelete={handleDelete}
-                onToggleActive={handleToggleActive}
                 deletingId={deletingId}
                 dimmed
               />
@@ -138,33 +122,24 @@ export default function AdminConcertListPage() {
 function EventGroup({
   title,
   concerts,
-  lang,
   onDelete,
-  onToggleActive,
   deletingId,
   dimmed,
 }: {
   title: string;
   concerts: ConcertWithStats[];
-  lang: string;
   onDelete: (id: string) => void;
-  onToggleActive: (c: ConcertWithStats) => void;
   deletingId: string | null;
   dimmed?: boolean;
 }) {
   return (
     <div>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gold/60 mb-4">
-      {title === "Upcoming" ? "קרובים" : "עבר"}
-    </h2>
       <div className="space-y-4">
         {concerts.map((c) => (
           <EventCard
             key={c.id}
             concert={c}
-            lang={lang}
             onDelete={onDelete}
-            onToggleActive={onToggleActive}
             deletingId={deletingId}
             dimmed={dimmed}
           />
@@ -178,32 +153,65 @@ function EventGroup({
 
 function EventCard({
   concert: c,
-  lang,
   onDelete,
-  onToggleActive,
   deletingId,
   dimmed,
 }: {
   concert: ConcertWithStats;
-  lang: string;
   onDelete: (id: string) => void;
-  onToggleActive: (c: ConcertWithStats) => void;
   deletingId: string | null;
   dimmed?: boolean;
 }) {
-  const title = lang === "he" ? c.title_he : c.title_en;
-  const fillPct = c.capacity > 0
-    ? Math.min(100, Math.round((c.stats.totalSpots / c.capacity) * 100))
-    : 0;
-  const isFull = fillPct >= 100;
+  const title = c.title_he;
+  const isFull = c.stats.totalSpots >= c.capacity;
 
   return (
-    <div
-      className={`rounded-2xl border bg-navy-card p-5 transition-opacity ${
+    <Link
+      href={`/admin/${c.id}`}
+      className={`relative block rounded-2xl border bg-navy-card p-5 transition-opacity hover:border-gold/40 transition-all ${
         dimmed ? "opacity-60" : ""
       } ${c.is_active ? "border-white/10" : "border-dashed border-white/20"}`}
     >
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+      {/* Corner actions */}
+      <a
+        href={`/admin/${c.id}/edit`}
+        onClick={(e) => e.stopPropagation()}
+        className="absolute top-3 start-3 p-1.5 rounded-lg text-cream-muted hover:text-gold transition-colors"
+        title="עריכה"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </a>
+      <a
+        href="/"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="absolute top-3 start-10 p-1.5 rounded-lg text-cream-muted hover:text-gold transition-colors"
+        title="תצוגה מקדימה"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </a>
+      <button
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(c.id); }}
+        disabled={deletingId === c.id}
+        className="absolute top-3 end-3 p-1.5 rounded-lg text-cream-muted/40 hover:text-cream-muted transition-colors disabled:opacity-40"
+        title="מחק"
+      >
+        {deletingId === c.id
+          ? <span className="w-4 h-4 flex items-center justify-center text-xs">…</span>
+          : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        }
+      </button>
+
+      <div className="flex flex-col sm:flex-row sm:items-start gap-4 pt-6 pb-2">
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -211,19 +219,10 @@ function EventCard({
             {c.band_name && c.band_name !== title && (
               <span className="text-xs text-cream-muted">— {c.band_name}</span>
             )}
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                c.is_active
-                  ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                  : "bg-white/5 text-cream-muted border border-white/10"
-              }`}
-            >
-              {c.is_active ? "פורסם" : "טיוטה"}
-            </span>
           </div>
 
           <p className="text-cream-muted text-sm mb-3">
-            {new Date(c.date).toLocaleDateString(lang === "he" ? "he-IL" : "en-US", {
+            {new Date(c.date).toLocaleDateString("he-IL", {
               weekday: "short",
               year: "numeric",
               month: "short",
@@ -231,68 +230,29 @@ function EventCard({
               hour: "2-digit",
               minute: "2-digit",
             })}
-            {" · "}
-            {lang === "he" ? c.location_he : c.location_en}
           </p>
 
           {/* Stats row */}
           <div className="flex flex-wrap gap-4 text-sm mb-3">
-            <Stat
-              label="Registered"
-              value={`${c.stats.totalSpots} / ${c.capacity}`}
-              highlight={isFull}
-            />
-            <Stat label="Check-ins" value={c.stats.checkedIn} color="text-green-400" />
+            <Stat label="נרשמו" value={`${c.stats.totalSpots} / ${c.capacity}`} highlight={isFull} />
             {c.stats.waitlist > 0 && (
-              <Stat label="Waitlist" value={c.stats.waitlist} color="text-gold" />
+              <Stat label="רשימת המתנה" value={c.stats.waitlist} color="text-gold" />
             )}
-            <Stat label="Price" value={`₪${c.price_nis}`} />
           </div>
 
           {/* Capacity bar */}
           <div className="h-1.5 rounded-full bg-white/10 overflow-hidden w-full max-w-xs">
             <div
               className={`h-full rounded-full transition-all ${
-                isFull ? "bg-red-400" : fillPct > 80 ? "bg-gold" : "bg-green-400"
+                isFull ? "bg-red-400" : c.stats.totalSpots / c.capacity > 0.8 ? "bg-gold" : "bg-green-400"
               }`}
-              style={{ width: `${fillPct}%` }}
+              style={{ width: `${Math.min(100, Math.round((c.stats.totalSpots / c.capacity) * 100))}%` }}
             />
           </div>
-          <p className="text-cream-muted text-xs mt-1">
-            {fillPct}% capacity filled
-          </p>
         </div>
 
-        {/* Actions */}
-        <div className="flex sm:flex-col gap-2 sm:items-end flex-shrink-0">
-          <Link
-            href={`/admin/${c.id}`}
-            className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-cream text-xs font-medium hover:border-gold/40 hover:text-gold transition-colors whitespace-nowrap"
-          >
-            רשימת אורחים
-          </Link>
-          <Link
-            href={`/admin/${c.id}/edit`}
-            className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-cream text-xs font-medium hover:border-gold/40 hover:text-gold transition-colors"
-          >
-            עריכה
-          </Link>
-          <button
-            onClick={() => onToggleActive(c)}
-            className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-cream-muted text-xs hover:border-white/30 hover:text-cream transition-colors"
-          >
-            {c.is_active ? "הסתר" : "פרסם"}
-          </button>
-          <button
-            onClick={() => onDelete(c.id)}
-            disabled={deletingId === c.id}
-            className="px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400 text-xs hover:bg-red-500/10 transition-colors disabled:opacity-40"
-          >
-            {deletingId === c.id ? "…" : "מחק"}
-          </button>
-        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

@@ -102,6 +102,15 @@ export function localCheckIn(id: string): Registration | null {
   return all[idx];
 }
 
+export function localUncheckIn(id: string): Registration | null {
+  const all = localGetRegistrations();
+  const idx = all.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+  all[idx] = { ...all[idx], checked_in: false, checked_in_at: null };
+  writeJSON(REGISTRATIONS_FILE, all);
+  return all[idx];
+}
+
 // ── Stats helper (mirrors what the Supabase admin route computes) ─────────────
 
 export function localGetStats(concertId: string) {

@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { Navbar } from "@/components/Navbar";
+import { AdminNavbar } from "@/components/AdminNavbar";
 import {
   EventForm,
   concertToFormValues,
@@ -68,13 +67,13 @@ export default function EditEventPage() {
       return;
     }
 
-    router.push("/admin/concerts");
+    router.back();
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
+        <AdminNavbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 rounded-full border-2 border-gold border-t-transparent animate-spin" />
         </div>
@@ -86,18 +85,10 @@ export default function EditEventPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <AdminNavbar />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10" dir="rtl">
-        <Link
-          href="/admin/concerts"
-          className="inline-flex items-center gap-2 text-sm text-cream-muted hover:text-gold transition-colors mb-8"
-        >
-          → חזרה לאירועים
-        </Link>
-
-        <h1 className="text-2xl font-bold text-cream mb-1">עריכת אירוע</h1>
-        <p className="text-cream-muted text-sm mb-10">{concert.title_he}</p>
+        <h1 className="text-2xl font-bold text-cream mb-10">{concert.title_he}</h1>
 
         <div className="rounded-2xl border border-white/10 bg-navy-card p-8">
           <EventForm
