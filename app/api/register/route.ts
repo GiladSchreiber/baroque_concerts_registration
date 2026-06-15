@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
             ${onWaitlist
               ? `<p style="color:#e4c060;">⚠️ הועברת לרשימת המתנה. נעדכן אותך אם יתפנה מקום.</p>`
               : `<div style="text-align:center;margin:24px 0;">
-                   <img src="${qrDataUrl}" style="width:200px;height:200px;" />
+                   <img src="cid:qrcode" style="width:200px;height:200px;" />
                    <p style="margin-top:12px;font-size:13px;color:#a09070;">הצג קוד זה בכניסה לאירוע</p>
                  </div>
                  <p style="text-align:center;">
@@ -81,6 +81,14 @@ export async function POST(req: NextRequest) {
                  </p>`
             }
           </div>`,
+        attachments: onWaitlist ? [] : [
+          {
+            filename: "qrcode.png",
+            content: qrDataUrl.split("base64,")[1],
+            encoding: "base64",
+            cid: "qrcode",
+          },
+        ],
       });
     } catch (emailErr) {
       console.error("[register] Email send failed:", emailErr);
