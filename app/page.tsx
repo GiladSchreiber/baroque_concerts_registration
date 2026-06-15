@@ -135,19 +135,32 @@ function ConcertCard({
               {title}
               {concert.band_name && <span className="text-gold"> | {bandName}</span>}
             </h3>
-            {concert.artists && concert.artists.length > 0 && (
-              <div className="flex flex-col gap-0.5">
-                {concert.artists.map((a, i) => {
-                  const name = lang === "he" ? a.name : (a.name_en || a.name);
-                  const instrument = lang === "he" ? a.instrument : (a.instrument_en || a.instrument);
-                  return (
-                    <p key={i} className="text-cream-muted text-base font-semibold">
-                      {instrument ? `${name} · ${instrument}` : name}
-                    </p>
-                  );
-                })}
-              </div>
-            )}
+            {concert.artists && concert.artists.length > 0 && (() => {
+              const hasInstruments = concert.artists.some(
+                (a) => (lang === "he" ? a.instrument : (a.instrument_en || a.instrument))
+              );
+              if (hasInstruments) {
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    {concert.artists.map((a, i) => {
+                      const name = lang === "he" ? a.name : (a.name_en || a.name);
+                      const instrument = lang === "he" ? a.instrument : (a.instrument_en || a.instrument);
+                      return (
+                        <p key={i} className="text-cream-muted text-base font-semibold">
+                          {name}{instrument ? ` · ${instrument}` : ""}
+                        </p>
+                      );
+                    })}
+                  </div>
+                );
+              } else {
+                return (
+                  <p className="text-cream-muted text-base font-semibold">
+                    {concert.artists.map((a) => lang === "he" ? a.name : (a.name_en || a.name)).join(" · ")}
+                  </p>
+                );
+              }
+            })()}
           </div>
 
           {/* Col 2: description (end side — left in Hebrew, right in English) */}

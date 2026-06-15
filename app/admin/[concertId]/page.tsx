@@ -86,8 +86,21 @@ export default function AdminConcertPage() {
     [t]
   );
 
+  const [deletingRegId, setDeletingRegId] = useState<string | null>(null);
+
+  const handleDeleteRegistration = async (id: string) => {
+    if (!confirm("למחוק את ההרשמה? פעולה זו אינה הפיכה.")) return;
+    setDeletingRegId(id);
+    await fetch(`/api/admin/registrations/${id}`, {
+      method: "DELETE",
+      headers: { "x-admin-password": adminPassword.current },
+    });
+    setRegistrations((prev) => prev.filter((r) => r.id !== id));
+    setDeletingRegId(null);
+  };
+
   const handleToggleCheckIn = async (reg: RegistrationRow) => {
-    if (qrScannedIds.current.has(reg.id)) return; // QR-scanned: locked
+    if (qrScannedIds.current.has(reg.id)) return;
     const method = reg.checked_in ? "DELETE" : "POST";
     const res = await fetch(`/api/checkin/${reg.id}`, {
       method,
@@ -232,6 +245,7 @@ export default function AdminConcertPage() {
                     <th className="px-4 py-3 text-start text-cream-muted font-medium hidden sm:table-cell">טלפון</th>
                     <th className="px-4 py-3 text-start text-cream-muted font-medium hidden md:table-cell">נרשם</th>
                     <th className="px-4 py-3 text-center text-cream-muted font-medium">{t.spots}</th>
+                    <th className="px-4 py-3 w-10"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -270,11 +284,26 @@ export default function AdminConcertPage() {
                         {format(new Date(reg.created_at), "MMM d, HH:mm")}
                       </td>
                       <td className="px-4 py-3 text-center text-cream">{reg.spots}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleDeleteRegistration(reg.id)}
+                          disabled={deletingRegId === reg.id}
+                          className="p-1.5 rounded-lg text-cream-muted/30 hover:text-red-400 transition-colors disabled:opacity-40"
+                          title="מחק הרשמה"
+                        >
+                          {deletingRegId === reg.id
+                            ? <span className="text-xs">…</span>
+                            : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                              </svg>
+                          }
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-4 py-10 text-center text-cream-muted">
+                      <td colSpan={6} className="px-4 py-10 text-center text-cream-muted">
                         אין אורחים תואמים
                       </td>
                     </tr>

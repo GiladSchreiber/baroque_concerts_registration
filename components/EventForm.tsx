@@ -17,7 +17,7 @@ const artistSchema = z.object({
 });
 
 export const eventSchema = z.object({
-  band_name: z.string().min(1, "שדה חובה"),
+  band_name: z.string().optional(),
   band_name_en: z.string().optional(),
   title_he: z.string().min(1, "שדה חובה"),
   title_en: z.string().min(1, "שדה חובה"),
@@ -56,7 +56,7 @@ export function concertToFormValues(c: Concert): EventFormValues {
 // Converts form values to Concert Insert payload
 export function formValuesToConcert(v: EventFormValues): Omit<Concert, "id" | "created_at"> {
   return {
-    band_name: v.band_name,
+    band_name: v.band_name ?? "",
     band_name_en: v.band_name_en ?? "",
     artists: v.artists,
     title_he: v.title_he,
@@ -137,7 +137,7 @@ export function EventForm({
       {/* ── Section: פרטי האירוע ─────────────────────────────────── */}
       <Section title="פרטי האירוע">
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="שם הלהקה / האנסמבל (עברית)" error={errors.band_name?.message} required>
+          <Field label="שם הלהקה / האנסמבל (עברית)" error={errors.band_name?.message}>
             <input
               {...register("band_name")}
               className={inputCls(!!errors.band_name)}
