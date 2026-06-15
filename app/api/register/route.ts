@@ -39,22 +39,26 @@ export async function POST(req: NextRequest) {
   if (insertError || !reg)
     return NextResponse.json({ error: "Failed to register" }, { status: 500 });
 
-  // Send confirmation email if Resend is configured
-  const resendKey = process.env.RESEND_API_KEY;
-  if (resendKey && !resendKey.startsWith("re_your")) {
+  // Send confirmation email via Gmail SMTP
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  if (gmailUser && gmailPass) {
     try {
-      const { Resend } = await import("resend");
+      const nodemailer = await import("nodemailer");
       const QRCode = await import("qrcode");
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-      const resend = new Resend(resendKey);
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: gmailUser, pass: gmailPass },
+      });
       const concertDate = new Date(concert.date).toLocaleDateString("he-IL", {
         weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
       });
       const qrDataUrl = await QRCode.toDataURL(reg.id, {
         width: 300, margin: 2, color: { dark: "#0a0a14", light: "#f0e6d3" },
       });
-      await resend.emails.send({
-        from: "Baroque Concerts <onboarding@resend.dev>",
+      await transporter.sendMail({
+        from: `"Baroque Bar Cafe" <${gmailUser}>`,
         to: email,
         subject: `אישור הרשמה – ${concert.title_he}`,
         html: `
@@ -80,7 +84,6 @@ export async function POST(req: NextRequest) {
       });
     } catch (emailErr) {
       console.error("[register] Email send failed:", emailErr);
-      // Don't fail the registration if email fails
     }
   }
 
