@@ -66,7 +66,7 @@ export function QRScanner({ onScan, active }: Props) {
       <div
         ref={containerRef}
         className="overflow-hidden rounded-xl border border-gold/20"
-        style={{ width: "100%", maxWidth: 400 }}
+        style={{ width: "100%", maxWidth: 400, minHeight: 300 }}
       />
     </div>
   );
