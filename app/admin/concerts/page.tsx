@@ -184,19 +184,6 @@ function EventCard({
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
       </a>
-      <a
-        href="/"
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="absolute top-3 start-10 p-1.5 rounded-lg text-cream-muted hover:text-gold transition-colors"
-        title="תצוגה מקדימה"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-      </a>
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(c.id); }}
         disabled={deletingId === c.id}

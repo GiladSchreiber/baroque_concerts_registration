@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { format } from "date-fns";
 import { AdminNavbar } from "@/components/AdminNavbar";
 import { useLanguage } from "@/components/LanguageProvider";
+import { ConcertCard } from "@/components/ConcertCard";
 import type { Concert, Registration } from "@/lib/database.types";
 
 const QRScanner = dynamic(
@@ -162,18 +163,6 @@ export default function AdminConcertPage() {
             )}
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2.5 rounded-xl border border-white/20 text-cream-muted hover:border-gold/40 hover:text-gold transition-colors"
-              title="תצוגה מקדימה"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-            </a>
             <button
               onClick={() => setScanning((s) => !s)}
               className={`p-2.5 rounded-xl border text-sm font-medium transition-colors ${
@@ -207,6 +196,12 @@ export default function AdminConcertPage() {
           <StatCard label={t.checkedInCount} value={checkedInCount} highlight />
           <StatCard label={t.waitlistCount} value={waitlistCount} />
           <StatCard label={lang === "he" ? "% מלא" : "% Full"} value={`${fillPct}%`} bar={fillPct} />
+        </div>
+
+        {/* ── Concert preview ─────────────────────────────────────── */}
+        <div className="mb-6 max-w-xl">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gold/50 mb-3">תצוגה מקדימה</p>
+          <ConcertCard concert={concert} lang={lang} t={t} />
         </div>
 
         {/* ── Scanner (inline, toggled) ─────────────────────────────── */}
