@@ -99,7 +99,7 @@ export function ConcertCard({
           </div>
 
           {/* Col 2: description */}
-          <div>
+          <div className="flex items-center">
             {description && (
               <p className="text-cream-muted text-base leading-relaxed">{description}</p>
             )}
