@@ -109,18 +109,20 @@ export default function RegisterPage() {
           {/* How it works */}
           <div className="rounded-2xl border border-gold/20 bg-navy-light p-6 mb-4">
             <h2 className="text-gold font-semibold mb-3">{t.howItWorks}</h2>
-            <p className="text-cream-muted text-sm leading-relaxed mb-3">
-              {lang === "he"
-                ? `הרשמה עולה ${concert.price_nis} ₪ למקום ומזכה אתכם ב:`
-                : `Registration costs ${concert.price_nis} NIS per spot and includes:`}
-            </p>
             <ul className="space-y-1.5">
-              {t.whatYouGetItems.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-cream-muted">
-                  <span className="text-gold mt-0.5">✦</span>
-                  {item}
-                </li>
-              ))}
+              {t.whatYouGetItems.map((item, i) => {
+                const text = i === 1
+                  ? (lang === "he"
+                    ? `כרטיס עולה ${concert.price_nis} ₪ ומזכה אתכם ב${item}`
+                    : `Ticket costs ${concert.price_nis} NIS and includes a ${item}`)
+                  : item;
+                return (
+                  <li key={i} className="flex items-start gap-2 text-sm text-cream-muted">
+                    <span className="text-gold mt-0.5">✦</span>
+                    {text}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
