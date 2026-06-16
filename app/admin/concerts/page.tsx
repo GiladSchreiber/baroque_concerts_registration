@@ -176,7 +176,7 @@ function EventCard({
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(c.id); }}
         disabled={deletingId === c.id}
-        className="absolute top-3 end-3 p-1.5 rounded-lg text-cream-muted/40 hover:text-cream-muted transition-colors disabled:opacity-40"
+        className="absolute top-3 end-3 p-1.5 rounded-lg text-cream-muted hover:text-gold transition-colors disabled:opacity-40"
         title="מחק"
       >
         {deletingId === c.id
