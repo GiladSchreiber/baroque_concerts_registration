@@ -90,9 +90,8 @@ function FullConfirmation({ data, t, lang, concertTitle, formatDate }: {
 
       <div className="mb-8">
         <div className="flex justify-center">
-          <QRCodeDisplay value={data.id} size={220} downloadName={`baroque-${concertTitle}`} />
+          <QRCodeDisplay value={data.id} size={220} downloadName={`baroque-${concertTitle}`} downloadData={{ name: data.full_name, concert: concertTitle, date: formatDate(data.concert.date), spots: data.spots }} />
         </div>
-        <p className="text-cream-muted text-xs mt-4 font-mono break-all text-center">{data.id}</p>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-navy-card p-6 text-start">

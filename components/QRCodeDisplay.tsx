@@ -3,14 +3,23 @@
 import { useEffect, useRef } from "react";
 import QRCodeLib from "qrcode";
 
+type DownloadData = {
+  name: string;
+  concert: string;
+  date: string;
+  spots: number;
+};
+
 export function QRCodeDisplay({
   value,
   size = 240,
   downloadName,
+  downloadData,
 }: {
   value: string;
   size?: number;
   downloadName?: string;
+  downloadData?: DownloadData;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -23,12 +32,86 @@ export function QRCodeDisplay({
     });
   }, [value, size]);
 
-  const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleDownload = async () => {
+    const qrCanvas = canvasRef.current;
+    if (!qrCanvas) return;
+
+    if (!downloadData) {
+      // Simple QR-only download
+      const link = document.createElement("a");
+      link.download = `${downloadName ?? "qr-code"}.png`;
+      link.href = qrCanvas.toDataURL("image/png");
+      link.click();
+      return;
+    }
+
+    // Build a styled card canvas
+    const W = 600;
+    const card = document.createElement("canvas");
+    card.width = W;
+
+    // Measure text to compute height
+    const ctx = card.getContext("2d")!;
+    const padding = 40;
+    const qrSize = 200;
+    const lineH = 26;
+    const totalH = padding + 48 + 16 + qrSize + 24 + lineH * 4 + padding;
+    card.height = totalH;
+
+    // Background
+    ctx.fillStyle = "#0a0a14";
+    ctx.fillRect(0, 0, W, totalH);
+
+    // Rounded card border
+    ctx.strokeStyle = "rgba(201,162,39,0.3)";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, 16, 16, W - 32, totalH - 32, 16);
+    ctx.stroke();
+
+    // Title
+    ctx.fillStyle = "#c9a227";
+    ctx.font = "bold 26px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Baroque Bar Cafe", W / 2, padding + 30);
+
+    // Concert name
+    ctx.fillStyle = "#f0e6d3";
+    ctx.font = "bold 18px Arial, sans-serif";
+    ctx.fillText(downloadData.concert, W / 2, padding + 64);
+
+    // QR code — centered
+    const qrX = (W - qrSize) / 2;
+    const qrY = padding + 80;
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+    // Details
+    ctx.textAlign = "right";
+    ctx.font = "14px Arial, sans-serif";
+    ctx.fillStyle = "rgba(240,230,211,0.5)";
+    const labelX = W / 2 - 16;
+    const valueX = W / 2 + 16;
+    const detailY = qrY + qrSize + 32;
+
+    const rows = [
+      ["שם", downloadData.name],
+      ["תאריך", downloadData.date],
+      ["מקומות", String(downloadData.spots)],
+    ];
+
+    ctx.textAlign = "right";
+    rows.forEach(([label, val], i) => {
+      const y = detailY + i * lineH;
+      ctx.fillStyle = "rgba(240,230,211,0.45)";
+      ctx.fillText(label, labelX, y);
+      ctx.fillStyle = "#f0e6d3";
+      ctx.textAlign = "left";
+      ctx.fillText(val, valueX, y);
+      ctx.textAlign = "right";
+    });
+
     const link = document.createElement("a");
-    link.download = `${downloadName ?? "qr-code"}.png`;
-    link.href = canvas.toDataURL("image/png");
+    link.download = `${downloadName ?? "baroque-ticket"}.png`;
+    link.href = card.toDataURL("image/png");
     link.click();
   };
 
@@ -52,4 +135,21 @@ export function QRCodeDisplay({
       </button>
     </div>
   );
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
