@@ -15,10 +15,12 @@ export function ConcertCard({
   concert,
   lang,
   t,
+  preview = false,
 }: {
   concert: ConcertWithCapacity;
   lang: string;
   t: ReturnType<typeof useLanguage>["t"];
+  preview?: boolean;
 }) {
   const title = lang === "he" ? concert.title_he : concert.title_en;
   const description = lang === "he" ? concert.description_he : concert.description_en;
@@ -34,11 +36,9 @@ export function ConcertCard({
     return format(d, "EEEE, MMMM d, yyyy · h:mm a");
   };
 
-  return (
-    <Link
-      href={`/concerts/${concert.id}/register`}
-      className="group flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-navy-card hover:border-gold/40 transition-all duration-300 hover:shadow-[0_0_30px_#c9a22720]"
-    >
+  const cardCls = "group flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-navy-card hover:border-gold/40 transition-all duration-300 hover:shadow-[0_0_30px_#c9a22720]";
+  const inner = (
+    <>
       {/* Poster */}
       <div className="relative">
         {concert.poster_url ? (
@@ -115,15 +115,25 @@ export function ConcertCard({
             {concert.price_nis} {t.nis}
             <span className="text-sm font-normal text-cream-muted"> / {t.perSpot}</span>
           </span>
-          {isFull ? (
+          {!preview && (isFull ? (
             <span className="text-sm font-semibold text-cream-muted">{t.soldOut}</span>
           ) : (
             <span className="text-sm font-semibold tracking-widest text-gold/60 group-hover:text-gold transition-colors">
               {t.registerBtn} {lang === "he" ? "←" : "→"}
             </span>
-          )}
+          ))}
         </div>
       </div>
+    </>
+  );
+
+  if (preview) {
+    return <div className={cardCls}>{inner}</div>;
+  }
+
+  return (
+    <Link href={`/concerts/${concert.id}/register`} className={cardCls}>
+      {inner}
     </Link>
   );
 }

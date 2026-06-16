@@ -219,7 +219,7 @@ export default function AdminConcertPage() {
         {/* ── Concert preview ─────────────────────────────────────── */}
         <div className="mb-6 max-w-xl">
           <p className="text-xs font-semibold uppercase tracking-widest text-gold/50 mb-3">תצוגה מקדימה</p>
-          <ConcertCard concert={concert} lang={lang} t={t} />
+          <ConcertCard concert={concert} lang={lang} t={t} preview />
         </div>
 
         {/* ── Guest list ───────────────────────────────────────────────── */}
