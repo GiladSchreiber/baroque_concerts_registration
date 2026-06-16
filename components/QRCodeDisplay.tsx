@@ -73,12 +73,12 @@ export function QRCodeDisplay({
       : 54;
 
     // Now compute total height accurately
-    const logoAreaH = logoH + 16;        // logo + gap below
-    const concertNameH = 28;             // concert name line
-    const qrAreaH = qrSize + 16;         // qr + gap below
-    const dividerH = 20;                 // divider + gap
+    const logoAreaH = logoH + 8;         // logo + gap below
+    const concertNameH = 24;             // concert name line
+    const qrAreaH = qrSize + 12;         // qr + gap below
+    const dividerH = 16;                 // divider + gap
     const detailsH = lineH * rows.length;
-    const totalH = padding + logoAreaH + concertNameH + 16 + qrAreaH + dividerH + detailsH + padding;
+    const totalH = padding + logoAreaH + concertNameH + 10 + qrAreaH + dividerH + detailsH + padding;
 
     const card = document.createElement("canvas");
     card.width = W;
@@ -109,12 +109,12 @@ export function QRCodeDisplay({
     ctx.fillText(downloadData.concert, W / 2, cursorY);
 
     // QR code
-    cursorY += 20;
+    cursorY += 10;
     const qrX = (W - qrSize) / 2;
     ctx.drawImage(qrCanvas, qrX, cursorY, qrSize, qrSize);
 
     // Divider
-    cursorY += qrSize + 14;
+    cursorY += qrSize + 10;
     ctx.strokeStyle = "rgba(240,230,211,0.1)";
     ctx.lineWidth = 1;
     ctx.beginPath();
