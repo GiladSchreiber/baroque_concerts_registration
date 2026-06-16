@@ -67,7 +67,7 @@ export function QRCodeDisplay({
       logoImg.onload = () => resolve();
       logoImg.onerror = () => resolve();
     });
-    const logoW = 160;
+    const logoW = 220;
     const logoH = logoImg.naturalWidth > 0
       ? Math.round((logoImg.naturalHeight / logoImg.naturalWidth) * logoW)
       : 54;
