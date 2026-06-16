@@ -50,7 +50,17 @@ export function QRCodeDisplay({
     const padding = 40;
     const qrSize = 220;
     const lineH = 28;
-    const totalH = padding + 56 + 20 + qrSize + 32 + lineH * 3 + padding + 20;
+
+    // Split date into date part and time part
+    const [datePart, timePart] = downloadData.date.split(" · ");
+    const rows = [
+      ["שם", downloadData.name],
+      ["תאריך", datePart ?? downloadData.date],
+      ["שעה", timePart ?? ""],
+      ["מקומות", String(downloadData.spots)],
+    ].filter(([, v]) => v !== "");
+
+    const totalH = padding + 80 + 20 + qrSize + 32 + lineH * rows.length + padding + 20;
     const card = document.createElement("canvas");
     card.width = W;
     card.height = totalH;
@@ -67,20 +77,29 @@ export function QRCodeDisplay({
     roundRect(ctx, 16, 16, W - 32, totalH - 32, 16);
     ctx.stroke();
 
-    // Title
-    ctx.fillStyle = "#c9a227";
-    ctx.font = "bold 22px Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Baroque Bar Cafe", W / 2, padding + 28);
+    // Logo (inverted to white)
+    const logoImg = new Image();
+    logoImg.src = "/logo.png";
+    await new Promise<void>((resolve) => {
+      logoImg.onload = () => resolve();
+      logoImg.onerror = () => resolve();
+    });
+    const logoW = 120;
+    const logoH = 40;
+    const logoX = (W - logoW) / 2;
+    ctx.filter = "invert(1) opacity(0.9)";
+    ctx.drawImage(logoImg, logoX, padding, logoW, logoH);
+    ctx.filter = "none";
 
     // Concert name
     ctx.fillStyle = "#f0e6d3";
-    ctx.font = "bold 16px Arial, sans-serif";
-    ctx.fillText(downloadData.concert, W / 2, padding + 56);
+    ctx.font = "bold 15px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(downloadData.concert, W / 2, padding + logoH + 28);
 
     // QR code — centered
     const qrX = (W - qrSize) / 2;
-    const qrY = padding + 76;
+    const qrY = padding + logoH + 48;
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
 
     // Divider
@@ -91,23 +110,20 @@ export function QRCodeDisplay({
     ctx.lineTo(W - padding, qrY + qrSize + 16);
     ctx.stroke();
 
-    // Details
+    // Details — RTL: label on right, value on left
     const detailY = qrY + qrSize + 36;
-    const rows = [
-      ["שם", downloadData.name],
-      ["תאריך", downloadData.date],
-      ["מקומות", String(downloadData.spots)],
-    ];
     const colMid = W / 2;
     rows.forEach(([label, val], i) => {
       const y = detailY + i * lineH;
       ctx.font = "14px Arial, sans-serif";
+      // Label — right side
       ctx.fillStyle = "rgba(240,230,211,0.45)";
-      ctx.textAlign = "right";
-      ctx.fillText(label, colMid - 12, y);
-      ctx.fillStyle = "#f0e6d3";
       ctx.textAlign = "left";
-      ctx.fillText(val, colMid + 12, y);
+      ctx.fillText(label, colMid + 12, y);
+      // Value — left side
+      ctx.fillStyle = "#f0e6d3";
+      ctx.textAlign = "right";
+      ctx.fillText(val, colMid - 12, y);
     });
 
     const link = document.createElement("a");
