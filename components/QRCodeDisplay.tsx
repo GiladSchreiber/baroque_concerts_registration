@@ -49,7 +49,7 @@ export function QRCodeDisplay({
     const W = 400;
     const padding = 40;
     const qrSize = 220;
-    const lineH = 28;
+    const lineH = 32;
 
     // Split date into date part and time part
     const [datePart, timePart] = downloadData.date.split(" · ");
@@ -60,11 +60,29 @@ export function QRCodeDisplay({
       ["מקומות", String(downloadData.spots)],
     ].filter(([, v]) => v !== "");
 
-    const totalH = padding + 80 + 20 + qrSize + 32 + lineH * rows.length + padding + 20;
+    // Load logo first so we know its height before computing canvas size
+    const logoImg = new Image();
+    logoImg.src = "/logo.png";
+    await new Promise<void>((resolve) => {
+      logoImg.onload = () => resolve();
+      logoImg.onerror = () => resolve();
+    });
+    const logoW = 160;
+    const logoH = logoImg.naturalWidth > 0
+      ? Math.round((logoImg.naturalHeight / logoImg.naturalWidth) * logoW)
+      : 54;
+
+    // Now compute total height accurately
+    const logoAreaH = logoH + 16;        // logo + gap below
+    const concertNameH = 28;             // concert name line
+    const qrAreaH = qrSize + 16;         // qr + gap below
+    const dividerH = 20;                 // divider + gap
+    const detailsH = lineH * rows.length;
+    const totalH = padding + logoAreaH + concertNameH + 16 + qrAreaH + dividerH + detailsH + padding;
+
     const card = document.createElement("canvas");
     card.width = W;
     card.height = totalH;
-
     const ctx = card.getContext("2d")!;
 
     // Background
@@ -77,62 +95,53 @@ export function QRCodeDisplay({
     roundRect(ctx, 16, 16, W - 32, totalH - 32, 16);
     ctx.stroke();
 
-    // Logo (inverted to white) — maintain aspect ratio
-    const logoImg = new Image();
-    logoImg.src = "/logo.png";
-    await new Promise<void>((resolve) => {
-      logoImg.onload = () => resolve();
-      logoImg.onerror = () => resolve();
-    });
-    const logoW = 160;
-    const logoH = logoImg.naturalWidth > 0
-      ? Math.round((logoImg.naturalHeight / logoImg.naturalWidth) * logoW)
-      : 54;
+    // Logo
     const logoX = (W - logoW) / 2;
     ctx.filter = "invert(1) opacity(0.9)";
     ctx.drawImage(logoImg, logoX, padding, logoW, logoH);
     ctx.filter = "none";
 
     // Concert name
+    let cursorY = padding + logoAreaH + concertNameH;
     ctx.fillStyle = "#f0e6d3";
     ctx.font = "bold 15px Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(downloadData.concert, W / 2, padding + logoH + 28);
+    ctx.fillText(downloadData.concert, W / 2, cursorY);
 
-    // QR code — centered
+    // QR code
+    cursorY += 20;
     const qrX = (W - qrSize) / 2;
-    const qrY = padding + logoH + 48;
-    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+    ctx.drawImage(qrCanvas, qrX, cursorY, qrSize, qrSize);
 
     // Divider
+    cursorY += qrSize + 14;
     ctx.strokeStyle = "rgba(240,230,211,0.1)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(padding, qrY + qrSize + 16);
-    ctx.lineTo(W - padding, qrY + qrSize + 16);
+    ctx.moveTo(padding, cursorY);
+    ctx.lineTo(W - padding, cursorY);
     ctx.stroke();
 
-    // Details — full-width justify-between, matching web layout
-    const detailY = qrY + qrSize + 36;
+    // Details
+    cursorY += dividerH;
+    ctx.font = "14px Arial, sans-serif";
     const colMid = W / 2;
-    rows.forEach(([label, val], i) => {
-      const y = detailY + i * lineH;
-      ctx.font = "14px Arial, sans-serif";
+    rows.forEach(([label, val]) => {
       // Label — right edge (muted)
       ctx.fillStyle = "rgba(240,230,211,0.45)";
       ctx.textAlign = "right";
-      ctx.fillText(label, W - padding, y);
-      // Value — left edge (bright)
+      ctx.fillText(label, W - padding, cursorY);
+      // Value — left edge, truncate if needed
       ctx.fillStyle = "#f0e6d3";
       ctx.textAlign = "left";
-      // Truncate if too long to avoid overlap
       let valText = val;
-      const maxValWidth = colMid - padding - 8;
-      while (ctx.measureText(valText).width > maxValWidth && valText.length > 4) {
+      const maxValW = colMid - padding - 8;
+      while (ctx.measureText(valText).width > maxValW && valText.length > 4) {
         valText = valText.slice(0, -1);
       }
       if (valText !== val) valText = valText.slice(0, -1) + "…";
-      ctx.fillText(valText, padding, y);
+      ctx.fillText(valText, padding, cursorY);
+      cursorY += lineH;
     });
 
     const link = document.createElement("a");
