@@ -77,15 +77,17 @@ export function QRCodeDisplay({
     roundRect(ctx, 16, 16, W - 32, totalH - 32, 16);
     ctx.stroke();
 
-    // Logo (inverted to white)
+    // Logo (inverted to white) — maintain aspect ratio
     const logoImg = new Image();
     logoImg.src = "/logo.png";
     await new Promise<void>((resolve) => {
       logoImg.onload = () => resolve();
       logoImg.onerror = () => resolve();
     });
-    const logoW = 120;
-    const logoH = 40;
+    const logoW = 160;
+    const logoH = logoImg.naturalWidth > 0
+      ? Math.round((logoImg.naturalHeight / logoImg.naturalWidth) * logoW)
+      : 54;
     const logoX = (W - logoW) / 2;
     ctx.filter = "invert(1) opacity(0.9)";
     ctx.drawImage(logoImg, logoX, padding, logoW, logoH);
