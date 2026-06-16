@@ -190,20 +190,6 @@ export default function AdminConcertPage() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <StatCard label={t.total} value={totalSpots} />
-          <StatCard label={t.checkedInCount} value={checkedInCount} highlight />
-          <StatCard label={t.waitlistCount} value={waitlistCount} />
-          <StatCard label={lang === "he" ? "% מלא" : "% Full"} value={`${fillPct}%`} bar={fillPct} />
-        </div>
-
-        {/* ── Concert preview ─────────────────────────────────────── */}
-        <div className="mb-6 max-w-xl">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gold/50 mb-3">תצוגה מקדימה</p>
-          <ConcertCard concert={concert} lang={lang} t={t} />
-        </div>
-
         {/* ── Scanner (inline, toggled) ─────────────────────────────── */}
         {scanning && (
           <div className="mb-6 space-y-4">
@@ -221,6 +207,20 @@ export default function AdminConcertPage() {
             </div>
           </div>
         )}
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard label={t.total} value={totalSpots} />
+          <StatCard label={t.checkedInCount} value={checkedInCount} highlight />
+          <StatCard label={t.waitlistCount} value={waitlistCount} />
+          <StatCard label={lang === "he" ? "% מלא" : "% Full"} value={`${fillPct}%`} bar={fillPct} />
+        </div>
+
+        {/* ── Concert preview ─────────────────────────────────────── */}
+        <div className="mb-6 max-w-xl">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gold/50 mb-3">תצוגה מקדימה</p>
+          <ConcertCard concert={concert} lang={lang} t={t} />
+        </div>
 
         {/* ── Guest list ───────────────────────────────────────────────── */}
         <div className="space-y-4">
