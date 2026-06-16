@@ -45,18 +45,17 @@ export function QRCodeDisplay({
       return;
     }
 
-    // Build a styled card canvas
-    const W = 600;
+    // Build a styled card canvas — portrait, mobile-friendly
+    const W = 400;
+    const padding = 40;
+    const qrSize = 220;
+    const lineH = 28;
+    const totalH = padding + 56 + 20 + qrSize + 32 + lineH * 3 + padding + 20;
     const card = document.createElement("canvas");
     card.width = W;
-
-    // Measure text to compute height
-    const ctx = card.getContext("2d")!;
-    const padding = 40;
-    const qrSize = 200;
-    const lineH = 26;
-    const totalH = padding + 48 + 16 + qrSize + 24 + lineH * 4 + padding;
     card.height = totalH;
+
+    const ctx = card.getContext("2d")!;
 
     // Background
     ctx.fillStyle = "#0a0a14";
@@ -70,43 +69,45 @@ export function QRCodeDisplay({
 
     // Title
     ctx.fillStyle = "#c9a227";
-    ctx.font = "bold 26px Arial, sans-serif";
+    ctx.font = "bold 22px Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Baroque Bar Cafe", W / 2, padding + 30);
+    ctx.fillText("Baroque Bar Cafe", W / 2, padding + 28);
 
     // Concert name
     ctx.fillStyle = "#f0e6d3";
-    ctx.font = "bold 18px Arial, sans-serif";
-    ctx.fillText(downloadData.concert, W / 2, padding + 64);
+    ctx.font = "bold 16px Arial, sans-serif";
+    ctx.fillText(downloadData.concert, W / 2, padding + 56);
 
     // QR code — centered
     const qrX = (W - qrSize) / 2;
-    const qrY = padding + 80;
+    const qrY = padding + 76;
     ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
 
-    // Details
-    ctx.textAlign = "right";
-    ctx.font = "14px Arial, sans-serif";
-    ctx.fillStyle = "rgba(240,230,211,0.5)";
-    const labelX = W / 2 - 16;
-    const valueX = W / 2 + 16;
-    const detailY = qrY + qrSize + 32;
+    // Divider
+    ctx.strokeStyle = "rgba(240,230,211,0.1)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, qrY + qrSize + 16);
+    ctx.lineTo(W - padding, qrY + qrSize + 16);
+    ctx.stroke();
 
+    // Details
+    const detailY = qrY + qrSize + 36;
     const rows = [
       ["שם", downloadData.name],
       ["תאריך", downloadData.date],
       ["מקומות", String(downloadData.spots)],
     ];
-
-    ctx.textAlign = "right";
+    const colMid = W / 2;
     rows.forEach(([label, val], i) => {
       const y = detailY + i * lineH;
+      ctx.font = "14px Arial, sans-serif";
       ctx.fillStyle = "rgba(240,230,211,0.45)";
-      ctx.fillText(label, labelX, y);
+      ctx.textAlign = "right";
+      ctx.fillText(label, colMid - 12, y);
       ctx.fillStyle = "#f0e6d3";
       ctx.textAlign = "left";
-      ctx.fillText(val, valueX, y);
-      ctx.textAlign = "right";
+      ctx.fillText(val, colMid + 12, y);
     });
 
     const link = document.createElement("a");
