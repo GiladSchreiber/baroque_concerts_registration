@@ -28,7 +28,7 @@ export function ImageUpload({ value, onChange }: Props) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const pw = sessionStorage.getItem("admin_password") ?? "";
+    const pw = localStorage.getItem("admin_password") ?? "";
     const res = await fetch("/api/admin/upload-image", {
       method: "POST",
       headers: { "x-admin-password": pw },

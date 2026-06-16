@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
     });
 
     if (res.ok) {
-      sessionStorage.setItem("admin_password", password);
+      localStorage.setItem("admin_password", password);
       router.push("/admin/concerts");
     } else {
       setError(t.adminWrongPassword);

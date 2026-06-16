@@ -24,7 +24,7 @@ export default function EditEventPage() {
   const [serverError, setServerError] = useState("");
 
   useEffect(() => {
-    const pw = sessionStorage.getItem("admin_password");
+    const pw = localStorage.getItem("admin_password");
     if (!pw) {
       router.push("/admin");
       return;

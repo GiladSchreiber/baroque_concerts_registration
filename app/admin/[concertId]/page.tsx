@@ -34,7 +34,7 @@ export default function AdminConcertPage() {
   const qrScannedIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    const pw = sessionStorage.getItem("admin_password");
+    const pw = localStorage.getItem("admin_password");
     if (!pw) { router.push("/admin"); return; }
     adminPassword.current = pw;
     loadData();
