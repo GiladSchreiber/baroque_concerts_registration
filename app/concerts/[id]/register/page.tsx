@@ -46,11 +46,14 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: { spots: 1 },
   });
+
+  const selectedSpots = Number(watch("spots") ?? 1);
 
   useEffect(() => {
     fetch(`/api/concerts/${id}`)
@@ -190,6 +193,16 @@ export default function RegisterPage() {
                   </label>
                 ))}
               </div>
+              {concert.price_nis > 0 && (
+                <div className="mt-3 flex items-center justify-between px-4 py-2.5 rounded-xl bg-gold/10 border border-gold/20">
+                  <span className="text-cream-muted text-sm">
+                    {lang === "he" ? "סה״כ לתשלום" : "Total"}
+                  </span>
+                  <span className="text-gold font-bold text-lg">
+                    {selectedSpots * concert.price_nis} ₪
+                  </span>
+                </div>
+              )}
             </Field>
 
             {serverError && (
