@@ -82,6 +82,9 @@ function FullConfirmation({ data, t, lang, concertTitle, formatDate }: {
   concertTitle: string;
   formatDate: (d: string) => string;
 }) {
+  const formattedDate = formatDate(data.concert.date);
+  const [datePart, timePart] = formattedDate.split(" · ");
+
   return (
     <div className="text-center">
       <h1 className="text-3xl font-bold text-cream mb-8">
@@ -90,7 +93,7 @@ function FullConfirmation({ data, t, lang, concertTitle, formatDate }: {
 
       <div className="mb-8">
         <div className="flex justify-center">
-          <QRCodeDisplay value={data.id} size={220} downloadName={`baroque-${concertTitle}`} downloadData={{ name: data.full_name, concert: concertTitle, date: formatDate(data.concert.date), spots: data.spots }} />
+          <QRCodeDisplay value={data.id} size={220} downloadName={`baroque-${concertTitle}`} downloadData={{ name: data.full_name, concert: concertTitle, date: formattedDate, spots: data.spots }} />
         </div>
       </div>
 
@@ -99,7 +102,8 @@ function FullConfirmation({ data, t, lang, concertTitle, formatDate }: {
         <dl className="space-y-3">
           <Detail label={t.name} value={data.full_name} />
           <Detail label={t.concert} value={concertTitle} />
-          <Detail label={t.date} value={formatDate(data.concert.date)} />
+          <Detail label={t.date} value={datePart ?? formattedDate} />
+          {timePart && <Detail label={lang === "he" ? "שעה" : "Time"} value={timePart} />}
           <Detail label={t.spots} value={String(data.spots)} />
         </dl>
       </div>
