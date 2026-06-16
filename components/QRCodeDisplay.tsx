@@ -112,20 +112,27 @@ export function QRCodeDisplay({
     ctx.lineTo(W - padding, qrY + qrSize + 16);
     ctx.stroke();
 
-    // Details — RTL: label on right, value on left
+    // Details — full-width justify-between, matching web layout
     const detailY = qrY + qrSize + 36;
     const colMid = W / 2;
     rows.forEach(([label, val], i) => {
       const y = detailY + i * lineH;
       ctx.font = "14px Arial, sans-serif";
-      // Label — right side
+      // Label — right edge (muted)
       ctx.fillStyle = "rgba(240,230,211,0.45)";
-      ctx.textAlign = "left";
-      ctx.fillText(label, colMid + 12, y);
-      // Value — left side
-      ctx.fillStyle = "#f0e6d3";
       ctx.textAlign = "right";
-      ctx.fillText(val, colMid - 12, y);
+      ctx.fillText(label, W - padding, y);
+      // Value — left edge (bright)
+      ctx.fillStyle = "#f0e6d3";
+      ctx.textAlign = "left";
+      // Truncate if too long to avoid overlap
+      let valText = val;
+      const maxValWidth = colMid - padding - 8;
+      while (ctx.measureText(valText).width > maxValWidth && valText.length > 4) {
+        valText = valText.slice(0, -1);
+      }
+      if (valText !== val) valText = valText.slice(0, -1) + "…";
+      ctx.fillText(valText, padding, y);
     });
 
     const link = document.createElement("a");
